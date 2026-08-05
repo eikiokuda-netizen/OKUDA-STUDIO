@@ -39,7 +39,7 @@ echo Build shell: %BASH_EXE%
 
 echo.
 echo [4/5] Building ROM...
-"%BASH_EXE%" -lc "make -C projects/nes-block-breaker"
+"%BASH_EXE%" -lc "repo_dir=$(cygpath -u \"$REPO_DIR\") && cd \"$repo_dir\" && make -C projects/nes-block-breaker"
 if errorlevel 1 goto :build_failed
 
 if not exist "%ROM_PATH%" goto :rom_not_found
@@ -90,7 +90,7 @@ exit /b 0
 
 :try_build_bash
 if not exist "%~1" exit /b 0
-"%~1" -lc "command -v make >/dev/null 2>&1"
+"%~1" -lc "command -v cygpath >/dev/null 2>&1 && command -v make >/dev/null 2>&1"
 if errorlevel 1 exit /b 0
 set "BASH_EXE=%~1"
 exit /b 0
