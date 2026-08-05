@@ -1,0 +1,4 @@
+# Generated NES ROMs are build artifacts. Keeping them out of PR diffs also
+# lets GitHub/Codex create the PR from text-only changes.
+/build/*.nes
+/src/*.nes
