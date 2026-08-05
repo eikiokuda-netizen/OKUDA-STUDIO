@@ -32,10 +32,10 @@ git pull origin main
 if errorlevel 1 goto :pull_failed
 
 echo.
-echo [3/5] Finding Git Bash...
-call :find_git_bash
+echo [3/5] Finding build shell...
+call :find_build_bash
 if not defined BASH_EXE goto :bash_not_found
-echo Git Bash: %BASH_EXE%
+echo Build shell: %BASH_EXE%
 
 echo.
 echo [4/5] Building ROM...
@@ -61,14 +61,38 @@ echo.
 echo Done. This window can be closed.
 goto :success
 
-:find_git_bash
+:find_build_bash
 set "BASH_EXE="
-if exist "%ProgramFiles%\Git\bin\bash.exe" set "BASH_EXE=%ProgramFiles%\Git\bin\bash.exe"
-if not defined BASH_EXE if exist "%ProgramFiles%\Git\usr\bin\bash.exe" set "BASH_EXE=%ProgramFiles%\Git\usr\bin\bash.exe"
-if not defined BASH_EXE if defined PF86 if exist "%PF86%\Git\bin\bash.exe" set "BASH_EXE=%PF86%\Git\bin\bash.exe"
-if not defined BASH_EXE if defined PF86 if exist "%PF86%\Git\usr\bin\bash.exe" set "BASH_EXE=%PF86%\Git\usr\bin\bash.exe"
-if not defined BASH_EXE if exist "%LocalAppData%\Programs\Git\bin\bash.exe" set "BASH_EXE=%LocalAppData%\Programs\Git\bin\bash.exe"
-if not defined BASH_EXE for /f "delims=" %%I in ('where bash.exe 2^>nul') do if not defined BASH_EXE set "BASH_EXE=%%I"
+call :try_build_bash "C:\msys64\usr\bin\bash.exe"
+if defined BASH_EXE exit /b 0
+call :try_build_bash "C:\msys64\mingw64\bin\bash.exe"
+if defined BASH_EXE exit /b 0
+call :try_build_bash "C:\msys64\ucrt64\bin\bash.exe"
+if defined BASH_EXE exit /b 0
+call :try_build_bash "C:\msys64\clang64\bin\bash.exe"
+if defined BASH_EXE exit /b 0
+call :try_build_bash "C:\msys64\mingw32\bin\bash.exe"
+if defined BASH_EXE exit /b 0
+call :try_build_bash "C:\msys64\clang32\bin\bash.exe"
+if defined BASH_EXE exit /b 0
+call :try_build_bash "%ProgramFiles%\Git\bin\bash.exe"
+if defined BASH_EXE exit /b 0
+call :try_build_bash "%ProgramFiles%\Git\usr\bin\bash.exe"
+if defined BASH_EXE exit /b 0
+if defined PF86 call :try_build_bash "%PF86%\Git\bin\bash.exe"
+if defined BASH_EXE exit /b 0
+if defined PF86 call :try_build_bash "%PF86%\Git\usr\bin\bash.exe"
+if defined BASH_EXE exit /b 0
+call :try_build_bash "%LocalAppData%\Programs\Git\bin\bash.exe"
+if defined BASH_EXE exit /b 0
+for /f "delims=" %%I in ('where bash.exe 2^>nul') do if not defined BASH_EXE call :try_build_bash "%%I"
+exit /b 0
+
+:try_build_bash
+if not exist "%~1" exit /b 0
+"%~1" -lc "command -v make >/dev/null 2>&1"
+if errorlevel 1 exit /b 0
+set "BASH_EXE=%~1"
 exit /b 0
 
 :find_fceux
@@ -112,7 +136,10 @@ echo Error: git pull origin main failed. Check the network and GitHub authentica
 goto :failure
 
 :bash_not_found
-echo Error: Git Bash was not found. Install Git for Windows with standard settings.
+echo Error: No usable bash with make was found.
+echo Fix: Install MSYS2 with make, or install make for Git Bash.
+echo.
+pause
 goto :failure
 
 :build_failed
