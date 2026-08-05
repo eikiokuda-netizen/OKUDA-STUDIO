@@ -1,12 +1,23 @@
-NESASM := /d/Tools/nesasm/nesasm.exe
-SOURCE := src/main.asm
+LOCAL_NESASM := ../tools/bin/nesasm
+NESASM ?= $(LOCAL_NESASM)
+SOURCE := main.asm
 OUTPUT := build/main.nes
+SRC_DIR := src
+SRC_ROM := $(SRC_DIR)/main.nes
 
-.PHONY: all clean
+.PHONY: all clean setup-nesasm assemble-from-src
 
-all:
-	cd src && $(NESASM) main.asm
-	cp src/main.nes $(OUTPUT)
+all: tools/bin/nesasm
+	$(MAKE) -C $(SRC_DIR) -f ../Makefile assemble-from-src
+	cp $(SRC_ROM) $(OUTPUT)
+
+tools/bin/nesasm: tools/setup_nesasm.sh
+	./tools/setup_nesasm.sh
+
+setup-nesasm: tools/bin/nesasm
+
+assemble-from-src:
+	$(NESASM) $(SOURCE)
 
 clean:
-	rm -f src/main.nes $(OUTPUT)
+	rm -f $(SRC_ROM) $(OUTPUT)

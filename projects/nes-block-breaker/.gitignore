@@ -1,2 +1,4 @@
 src/*.nes
 build/*.nes
+tools/bin/
+tools/build/
