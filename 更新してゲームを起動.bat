@@ -1,8 +1,7 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-chcp 65001 >nul
 
-rem OKUDA-STUDIO Windows one-click updater / launcher.
+rem OKUDA-STUDIO Windows one-click updater and launcher.
 rem This script is intended to be double-clicked from the repository root.
 
 set "REPO_DIR=%~dp0"
@@ -15,38 +14,38 @@ set "PF86=%ProgramFiles(x86)%"
 cd /d "%REPO_DIR%" || goto :repo_error
 
 echo ========================================
-echo OKUDA-STUDIO NESゲーム 更新・起動
+echo OKUDA-STUDIO NES update and launch
 echo ========================================
-echo 作業フォルダ: %CD%
+echo Work directory: %CD%
 echo.
 
 where git >nul 2>nul
 if errorlevel 1 goto :git_not_found
 
-echo [1/5] mainブランチへ切り替えています...
+echo [1/5] Switching to main branch...
 git checkout main
 if errorlevel 1 goto :checkout_failed
 
 echo.
-echo [2/5] 最新版を取得しています...
+echo [2/5] Pulling latest changes...
 git pull origin main
 if errorlevel 1 goto :pull_failed
 
 echo.
-echo [3/5] Git Bashを探しています...
+echo [3/5] Finding Git Bash...
 call :find_git_bash
 if not defined BASH_EXE goto :bash_not_found
 echo Git Bash: %BASH_EXE%
 
 echo.
-echo [4/5] ROMをビルドしています...
+echo [4/5] Building ROM...
 "%BASH_EXE%" -lc "make -C projects/nes-block-breaker"
 if errorlevel 1 goto :build_failed
 
 if not exist "%ROM_PATH%" goto :rom_not_found
 
 echo.
-echo [5/5] FCEUXを探しています...
+echo [5/5] Finding FCEUX...
 call :find_fceux
 if not defined FCEUX_EXE goto :fceux_not_found
 if not exist "%FCEUX_EXE%" goto :fceux_not_found
@@ -54,12 +53,12 @@ if not exist "%FCEUX_EXE%" goto :fceux_not_found
 echo FCEUX: %FCEUX_EXE%
 echo ROM: %ROM_PATH%
 echo.
-echo FCEUXでゲームを起動します...
+echo Starting game with FCEUX...
 start "" "%FCEUX_EXE%" "%ROM_PATH%"
 if errorlevel 1 goto :launch_failed
 
 echo.
-echo 完了しました。このウィンドウは閉じてかまいません。
+echo Done. This window can be closed.
 goto :success
 
 :find_git_bash
@@ -90,56 +89,54 @@ call :select_fceux
 exit /b 0
 
 :select_fceux
-echo FCEUXが自動検出できませんでした。
-echo ファイル選択画面で fceux.exe を選んでください。
-for /f "usebackq delims=" %%I in (`powershell -NoProfile -STA -ExecutionPolicy Bypass -Command "Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.OpenFileDialog; $d.Title = 'fceux.exe を選択してください'; $d.Filter = 'FCEUX executable (fceux.exe)^|fceux.exe^|Executable files (*.exe)^|*.exe^|All files (*.*)^|*.*'; if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { $d.FileName }"`) do set "FCEUX_EXE=%%I"
+echo FCEUX was not found automatically.
+echo Select fceux.exe in the file picker.
+for /f "usebackq delims=" %%I in (`powershell -NoProfile -STA -ExecutionPolicy Bypass -Command "Add-Type -AssemblyName System.Windows.Forms; $d = New-Object System.Windows.Forms.OpenFileDialog; $d.Title = 'Select fceux.exe'; $d.Filter = 'FCEUX executable (fceux.exe)^|fceux.exe^|Executable files (*.exe)^|*.exe^|All files (*.*)^|*.*'; if ($d.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) { $d.FileName }"`) do set "FCEUX_EXE=%%I"
 if defined FCEUX_EXE if exist "%FCEUX_EXE%" >"%FCEUX_CONFIG%" echo %FCEUX_EXE%
 exit /b 0
 
 :repo_error
-echo エラー: バッチファイルが置かれているフォルダを作業場所にできませんでした。
+echo Error: Could not use the batch file folder as the work directory.
 goto :failure
 
 :git_not_found
-echo エラー: git コマンドが見つかりません。Git for Windowsをインストールしてください。
+echo Error: git was not found. Install Git for Windows.
 goto :failure
 
 :checkout_failed
-echo エラー: mainブランチへの切り替えに失敗しました。未保存の変更や競合がないか確認してください。
+echo Error: Could not switch to main. Check for uncommitted changes or conflicts.
 goto :failure
 
 :pull_failed
-echo エラー: git pull origin main に失敗しました。ネットワーク接続やGitHubの認証状態を確認してください。
+echo Error: git pull origin main failed. Check the network and GitHub authentication.
 goto :failure
 
 :bash_not_found
-echo エラー: Git Bashが見つかりません。Git for Windowsを標準設定でインストールしてください。
+echo Error: Git Bash was not found. Install Git for Windows with standard settings.
 goto :failure
 
 :build_failed
-echo エラー: ROMのビルドに失敗しました。上に表示されたmakeのエラー内容を確認してください。
+echo Error: ROM build failed. Check the make output above.
 goto :failure
 
 :rom_not_found
-echo エラー: ビルド後のROMが見つかりません: %ROM_PATH%
+echo Error: Built ROM was not found: %ROM_PATH%
 goto :failure
 
 :fceux_not_found
-echo エラー: FCEUXが見つからないか、選択されませんでした。
-echo 対処: FCEUXをインストールしてから再実行するか、.fceux_path.txt に fceux.exe のフルパスを保存してください。
+echo Error: FCEUX was not found or was not selected.
+echo Fix: Install FCEUX or save the full fceux.exe path in .fceux_path.txt.
 goto :failure
 
 :launch_failed
-echo エラー: FCEUXの起動に失敗しました。
+echo Error: Could not start FCEUX.
 goto :failure
 
 :failure
 echo.
-echo 処理を中断しました。内容を確認してから、もう一度実行してください。
-pause
+echo Stopped. Check the message above and run this file again.
 exit /b 1
 
 :success
 echo.
-pause
 exit /b 0
