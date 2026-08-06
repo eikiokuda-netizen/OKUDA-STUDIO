@@ -1,0 +1,6 @@
+/tools/bin/
+/tools/build/
+/src/*.nes
+/src/*.fns
+/src/*.lst
+/build/*.nes
